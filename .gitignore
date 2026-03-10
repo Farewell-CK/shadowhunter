@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 项目特定
+data/
+temp/
+logs/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.pt
+*.pth
+
+# 环境变量和配置
+.env
+.env.local
+*.bak
+backend/config.py
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# ChromaDB
+chroma.sqlite3

@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义样式 */
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+/* 视频时间轴样式 */
+.timeline-marker {
+  @apply absolute top-0 h-full w-1 bg-red-500 cursor-pointer;
+}
+
+/* 搜索结果卡片 */
+.result-card {
+  @apply bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow;
+}
+
+/* 视频播放器容器 */
+.video-container {
+  @apply relative bg-black rounded-lg overflow-hidden;
+}
+
+/* 特征标签 */
+.feature-tag {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800;
+}
+
+/* 加载动画 */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

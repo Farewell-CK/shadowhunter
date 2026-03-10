@@ -1,0 +1,38 @@
+# ShadowHunter - 视频语义检索系统配置
+
+# 智谱 AI API 配置
+ZHIPU_API_KEY = "your_api_key_here"  # 请填入你的智谱 API Key
+ZHIPU_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
+
+# 模型配置
+MODEL_CHAT = "glm-5"  # 用于查询解析 (升级到 glm-5)
+MODEL_VISION = "glm-4.6v"  # 用于视频/图像理解
+MODEL_EMBEDDING = "embedding-3"  # 用于向量生成
+
+# 并发控制 (API QPS 限制)
+MAX_CONCURRENT_REQUESTS = 10
+
+# 视频分片配置
+SLICE_DURATION = 8  # 标准片段时长 (秒)
+SLICE_STRIDE = 5    # 步长 (秒), 产生 50% 重叠
+SLICE_MIN_DURATION = 5
+SLICE_MAX_DURATION = 15
+
+# 向量数据库配置
+VECTOR_DB_PATH = "./data/chromadb"
+EMBEDDING_DIMENSION = 2048
+
+# 临时文件配置
+TEMP_DIR = "./temp/slices"
+CLEANUP_AFTER_PROCESS = True
+
+# 智能过滤配置 (针对私有化部署优化)
+ENABLE_MOTION_DETECTION = True  # 是否开启运动检测初筛
+ENABLE_OBJECT_DETECTION = True  # 是否开启 YOLO 目标检测初筛
+SMART_SCAN_MODE = True           # 是否开启基于目标的智能事件扫描模式 (替代固定切片)
+DETECTION_THRESHOLD = 0.5        # 目标检测置信度阈值
+REQUIRED_OBJECTS = ["person", "car", "bus", "truck", "motorcycle", "bicycle"] # 感兴趣的目标类型
+
+# 服务配置
+API_HOST = "0.0.0.0"
+API_PORT = 8000
