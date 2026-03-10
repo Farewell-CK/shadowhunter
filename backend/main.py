@@ -226,6 +226,7 @@ async def get_config():
     return {
         "enable_motion_detection": ENABLE_MOTION_DETECTION,
         "enable_object_detection": ENABLE_OBJECT_DETECTION,
+        "smart_scan_mode": SMART_SCAN_MODE,
         "required_objects": REQUIRED_OBJECTS,
         "available_objects": all_available_objects,
         "motion_threshold": 0.01  # 默认 1% 的面积变化

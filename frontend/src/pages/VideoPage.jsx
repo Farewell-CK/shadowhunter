@@ -77,7 +77,8 @@ function VideoPage() {
         selectedObjects,
         enableMotion,
         enableObject,
-        motionThreshold
+        motionThreshold,
+        smartScan
       )
 
       pollTaskStatus(processResult.task_id)
@@ -122,6 +123,18 @@ function VideoPage() {
               />
               <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors">
                 开启 YOLO 目标初筛 (仅分析人/车)
+              </span>
+            </label>
+
+            <label className="flex items-center cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={smartScan} 
+                onChange={(e) => setSmartScan(e.target.checked)}
+                className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-orange-600 transition-colors font-semibold">
+                智能事件扫描模式 (解决边缘遗漏)
               </span>
             </label>
 

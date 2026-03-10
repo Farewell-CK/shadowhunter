@@ -102,7 +102,10 @@
       "Bash(/root/workspace/zp/ShadowHunter_qwen/start.sh --stop)",
       "Bash(/root/workspace/zp/ShadowHunter_qwen/start.sh --backend-only)",
       "Bash(sleep 60 && tail -30 /root/workspace/zp/ShadowHunter_qwen/logs/backend.log && echo \"--- 检查结果 ---\" && cat /tmp/direct_match_result.json 2>/dev/null | python -m json.tool 2>/dev/null | head -50)",
-      "Bash(git init && git add . && git status)"
+      "Bash(git init && git add . && git status)",
+      "Bash(git branch -m main && git remote add origin https://github.com/Farewell-CK/shadowhunter.git)",
+      "Bash(git commit -m \"$\\(cat <<'EOF'\nInitial commit: ShadowHunter - 视频语义检索系统\n\n基于智谱 AI 的全栈视频语义检索系统，专为视频侦查设计。\n\n功能特性:\n- 智能分片: 8秒黄金窗口，5秒步长重叠分片\n- 视觉理解: GLM-4.6V 视频分析\n- 语义检索: 自然语言搜索，秒级定位目标视频片段\n- 视觉核实: Top-N 结果二次核验\n\n技术栈:\n- 后端: Python + FastAPI\n- 前端: React + Vite + TailwindCSS\n- AI: 智谱AI \\(GLM-4/GLM-4.6V/Embedding-3\\)\n- 向量数据库: ChromaDB\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push -u origin main)"
     ]
   }
 }
