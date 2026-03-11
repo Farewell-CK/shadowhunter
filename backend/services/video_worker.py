@@ -553,6 +553,67 @@ class VideoScanner:
         events.append((max(0, start - 2.0), prev + 2.0))
         return events
 
+    async def extract_target_keyframes(
+        self, 
+        video_path: Path, 
+        target_labels: list, 
+        max_frames: int = 3
+    ) -> list[Path]:
+        """
+        [核心修复] 以目标为中心的智能抽帧
+        从视频片段中，利用 YOLO 找出包含目标、且目标面积最大的几张帧
+        彻底解决“片段中有7.5秒没人，只有0.5秒有人”导致大模型失焦的问题。
+        """
+        def _extract():
+            cap = cv2.VideoCapture(str(video_path))
+            if not cap.isOpened(): return []
+            
+            frame_scores = [] # (score, frame)
+            frame_idx = 0
+            
+            while True:
+                ret, frame = cap.read()
+                if not ret: break
+                
+                # 每 3 帧抽一次，寻找最佳
+                if frame_idx % 3 == 0:
+                    results = self.yolo_detector.model.predict(frame, verbose=False)
+                    max_area = 0
+                    
+                    for r in results:
+                        boxes = r.boxes
+                        for box in boxes:
+                            cls_id = int(box.cls[0].item())
+                            label = r.names[cls_id]
+                            
+                            if label in target_labels:
+                                # 计算边界框面积作为“清晰度/重要性”得分
+                                x1, y1, x2, y2 = box.xyxy[0].tolist()
+                                area = (x2 - x1) * (y2 - y1)
+                                if area > max_area:
+                                    max_area = area
+                    
+                    if max_area > 0:
+                        frame_scores.append((max_area, frame))
+                        
+                frame_idx += 1
+            
+            cap.release()
+            
+            # 按面积从大到小排序，选出最具代表性的前 max_frames 张
+            frame_scores.sort(key=lambda x: x[0], reverse=True)
+            top_frames = [f[1] for f in frame_scores[:max_frames]]
+            
+            # 将这些优质帧保存为临时文件
+            saved_paths = []
+            for idx, f in enumerate(top_frames):
+                tmp_path = Path(tempfile.gettempdir()) / f"keyframe_{uuid.uuid4().hex}_{idx}.jpg"
+                cv2.imwrite(str(tmp_path), f)
+                saved_paths.append(tmp_path)
+                
+            return saved_paths
+
+        return await asyncio.to_thread(_extract)
 
 class VideoWorker:
     """

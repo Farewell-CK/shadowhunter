@@ -159,6 +159,34 @@ class ZhipuManager:
         # 解析结果
         return self._parse_video_analysis(result_text)
 
+    async def analyze_images(
+        self,
+        image_sources: list[Union[str, Path, bytes]],
+        prompt: str = "请描述这些图片的内容。",
+        image_type: str = "jpeg",
+    ) -> VideoAnalysisResult:
+        """
+        多图像联合分析接口 (glm-4.6v)
+        用于将提取出的多个关键帧发给大模型进行综合分析
+        """
+        content = []
+        for source in image_sources:
+            img_content = await self._prepare_image_content(source, image_type)
+            content.append({"type": "image_url", "image_url": {"url": img_content}})
+        
+        content.append({"type": "text", "text": prompt})
+
+        messages = [{"role": "user", "content": content}]
+
+        async with self._rate_limit():
+            response = await self.client.chat.completions.create(
+                model=MODEL_VISION,
+                messages=messages,
+            )
+            result_text = response.choices[0].message.content
+
+        return self._parse_video_analysis(result_text)
+
     async def analyze_image(
         self,
         image_source: Union[str, Path, bytes],

@@ -394,10 +394,9 @@ async def _process_video_task(
 
                     # 2. 调用大模型进行深度特征提取 (精排层)
                     update_status("正在进行大模型深度特征分析 (Rerank)...")
-                    analysis = await ai_client.analyze_video(
-                        video_source=slice_obj.file_path,
-                        prompt="""你是一个专业的公安图侦与视频分析专家。
-请审查这段视频切片，极其简练地提取可用于刑侦检索的核心特征。
+                    
+                    analysis_prompt = """你是一个专业的公安图侦与视频分析专家。
+请审查提供的画面，极其简练地提取可用于刑侦检索的核心特征。
 请直接输出一段高浓度的特征描述（用逗号分隔，不要有任何多余的寒暄和解释词）。
 
 重点关注以下维度：
@@ -407,12 +406,40 @@ async def _process_video_task(
 4. 车辆特征：车型颜色
 5. 行为轨迹：正常/鬼祟/奔跑
 
-示例输出："男性, 青壮年, 黑上衣, 蓝牛仔裤, 戴白色头盔, 骑行红色两轮电动车" """,
-                    )
-                    slice_obj.description = analysis.description
+示例输出："男性, 青壮年, 黑上衣, 蓝牛仔裤, 戴白色头盔, 骑行红色两轮电动车" """
+
+                    if SMART_SCAN_MODE:
+                        # 智能模式核心：不给大模型看可能包含大量空镜的完整视频
+                        # 而是用 YOLO 把有目标的、最清晰的 3 张关键帧喂给它
+                        update_status("智能抽帧：提取目标最大最清晰的关键帧...")
+                        targets = custom_required_objects or ["person", "car"]
+                        keyframes = await worker.scanner.extract_target_keyframes(slice_obj.file_path, targets, max_frames=3)
+                        
+                        if not keyframes:
+                            slice_obj.description = "无显著目标 (已过滤)"
+                            slice_obj.metadata["skipped"] = True
+                            task_status[task_id]["filtered_slices"] += 1
+                        else:
+                            update_status("多帧联合分析中...")
+                            analysis = await ai_client.analyze_images(
+                                image_sources=keyframes,
+                                prompt=analysis_prompt,
+                            )
+                            slice_obj.description = analysis.description
+                            
+                            # 清理抽帧生成的临时图片
+                            for kf in keyframes:
+                                if kf.exists(): kf.unlink()
+                    else:
+                        # 传统模式，喂给整个视频
+                        analysis = await ai_client.analyze_video(
+                            video_source=slice_obj.file_path,
+                            prompt=analysis_prompt,
+                        )
+                        slice_obj.description = analysis.description
                     
                     # 向量化与存储
-                    if slice_obj.description and slice_obj.description != "分析失败":
+                    if slice_obj.description and slice_obj.description not in ["分析失败", "无显著目标 (已过滤)"]:
                         embedding_result = await ai_client.get_embedding(slice_obj.description)
                         slice_obj.embedding = embedding_result.vector
                         await vector_store.add_slice(slice_obj)
