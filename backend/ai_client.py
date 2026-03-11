@@ -202,6 +202,20 @@ class ZhipuManager:
                 dimension=len(vector),
             )
 
+    async def get_visual_embedding(self, image_source: Union[str, Path, bytes]) -> EmbeddingResult:
+        """
+        获取图像的视觉向量 (CLIP 逻辑)
+        """
+        # 针对 A100 服务器，后期这里可以平替为本地加载的 CLIP 模型推理
+        # 目前使用智谱 embedding-3 模型处理图片（如果支持）或模拟返回
+        image_content = await self._prepare_image_content(image_source)
+        
+        async with self._rate_limit():
+            # 这里的逻辑取决于智谱多模态 Embedding API 的具体调用方式
+            # 暂用占位模拟，确保流水线走通
+            await asyncio.sleep(0.1) 
+            return EmbeddingResult(vector=[0.0] * 2048, dimension=2048)
+
     async def _prepare_video_content(
         self,
         source: Union[str, Path, bytes],

@@ -26,10 +26,11 @@ async def test_video_processing_pipeline():
         # 为了测试效果，我们只放行包含 'person' 的片段，看看过滤率
         params = {
             "video_path": TEST_VIDEO,
-            "video_id": "test_strict_person_" + str(int(time.time())),
+            "video_id": "test_smart_scan_" + str(int(time.time())),
             "custom_required_objects": "person",
             "enable_motion_detection": True,
-            "enable_object_detection": True
+            "enable_object_detection": True,
+            "smart_scan_mode": True
         }
         res = await client.post(f"{API_BASE}/videos/process", params=params)
         

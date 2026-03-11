@@ -87,6 +87,11 @@ class SearchEngine:
         if not query_text_for_embedding.strip():
             query_text_for_embedding = query_text
 
+        # --- A100 优化预留位 ---
+        # 后期在 A100 上，这里需要调用 CLIP 的 Text Encoder 来生成查询向量
+        # 以便与入库时的 CLIP 视觉向量在同一空间进行匹配
+        # embedding_result = await self.ai_client.get_visual_embedding(query_text_for_embedding) 
+        
         embedding_result = await self.ai_client.get_embedding(query_text_for_embedding)
 
         # 3. 向量检索

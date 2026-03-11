@@ -210,7 +210,7 @@ async def upload_video(file: UploadFile = File(...)):
 @app.get("/api/config")
 async def get_config():
     """获取系统配置，包括过滤器选项"""
-    from config import ENABLE_MOTION_DETECTION, ENABLE_OBJECT_DETECTION, REQUIRED_OBJECTS, DETECTION_THRESHOLD
+    from config import ENABLE_MOTION_DETECTION, ENABLE_OBJECT_DETECTION, REQUIRED_OBJECTS, DETECTION_THRESHOLD, SMART_SCAN_MODE
     
     # 预设的完整类别列表 (用于前端显示供用户选择)
     all_available_objects = [
@@ -382,8 +382,18 @@ async def _process_video_task(
                         task_status[task_id]["_updated"] = time.time()
 
                     # 在智能模式下，因为已经确定有人，所以不再进行二次 _should_process_slice 过滤
-                    # 直接调用大模型
-                    update_status("正在进行大模型深度特征提取...")
+                    # 1. 优先提取视觉向量 (CLIP)，以便立即搜索
+                    from config import ENABLE_CLIP_RECALL
+                    if ENABLE_CLIP_RECALL:
+                        update_status("正在提取视觉向量特征 (CLIP/Recall)...")
+                        visual_vector = await worker.extract_visual_features(slice_obj)
+                        if visual_vector:
+                            slice_obj.embedding = visual_vector
+                            # 存入向量库 (此时只有视觉特征，没有文字描述)
+                            await vector_store.add_slice(slice_obj)
+
+                    # 2. 调用大模型进行深度特征提取 (精排层)
+                    update_status("正在进行大模型深度特征分析 (Rerank)...")
                     analysis = await ai_client.analyze_video(
                         video_source=slice_obj.file_path,
                         prompt="""你是一个专业的公安图侦与视频分析专家。

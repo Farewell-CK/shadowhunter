@@ -490,9 +490,10 @@ class VideoScanner:
     ) -> list[tuple[float, float]]:
         """
         全片快速扫描目标
-        Args:
-            fps_limit: 扫描密度，默认每秒扫 1 帧，平衡速度与精度
         """
+        return await asyncio.to_thread(self._scan_blocking, video_path, target_labels, fps_limit, status_callback)
+
+    def _scan_blocking(self, video_path, target_labels, fps_limit, status_callback):
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened(): return []
         
@@ -566,6 +567,33 @@ class VideoWorker:
         self.motion_detector = MotionDetector()
         self.yolo_detector = YoloDetector()
         self.scanner = VideoScanner(self.yolo_detector) # 引入扫描器
+
+    async def extract_visual_features(self, slice_obj: VideoSlice) -> list[float]:
+        """
+        提取切片的视觉特征向量 (CLIP 逻辑)
+        """
+        if not slice_obj.file_path or not slice_obj.file_path.exists():
+            return []
+
+        # 1. 抽取中间帧作为代表
+        cap = cv2.VideoCapture(str(slice_obj.file_path))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.set(cv2.CAP_PROP_POS_FRAMES, total_frames // 2)
+        ret, frame = cap.read()
+        cap.release()
+
+        if not ret:
+            return []
+
+        # 2. 临时保存并获取视觉向量
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+            cv2.imwrite(str(tmp_path), frame)
+            
+            emb_res = await self.ai_client.get_visual_embedding(tmp_path)
+            tmp_path.unlink()
+            
+            return emb_res.vector if emb_res else []
 
     async def _should_process_slice(
         self, 
